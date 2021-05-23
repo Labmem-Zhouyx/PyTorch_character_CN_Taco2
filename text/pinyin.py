@@ -17,6 +17,8 @@ Supports the following Pinyin-with-label string (Pinyin with prosodic structure 
   Author: johnson.tsing@gmail.com
 '''
 
+__pad = '_'
+_eos = '~'
 
 # Mandarin initials (普通话声母列表)
 _initials = ['b', 'p', 'f', 'm', \
@@ -27,15 +29,15 @@ _initials = ['b', 'p', 'f', 'm', \
              'z', 'c', 's']
 
 # Mandarin finals (普通话韵母列表)
-_finals = ['a',  'ai', 'ao',  'an',  'ang', \
-           'o',  'ou', 'ong', \
-           'e',  'ei', 'en',  'eng', 'er', 'ev', \
-           'i',  'ix', 'iy', \
-           'ia', 'iao','ian', 'iang','ie', \
-           'in', 'ing','io',  'iou', 'iong', \
-           'u',  'ua', 'uo',  'uai', 'uei', \
-           'uan','uen','uang','ueng', \
-           'v',  've', 'van', 'vn', \
+_finals = ['a', 'ai', 'ao', 'an', 'ang', \
+           'o', 'ou', 'ong', \
+           'e', 'ei', 'en', 'eng', 'er', 'ev', \
+           'i', 'ix', 'iy', \
+           'ia', 'iao', 'ian', 'iang', 'ie', \
+           'in', 'ing', 'io', 'iou', 'iong', \
+           'u', 'ua', 'uo', 'uai', 'uei', \
+           'uan', 'uen', 'uang', 'ueng', \
+           'v', 've', 'van', 'vn', \
            'ng', 'mm', 'nn']
 
 # Retroflex (Erhua) (儿化音信息)
@@ -49,7 +51,7 @@ _prosodic_struct = [' ', '/', ',', '.', '?', '!']
 
 
 def split_pinyin(pinyin):
-  '''
+    '''
   Split a single Pinyin into initial, final, tone and erhua (Retroflex). (With reference to pinyin.pl)
 
             tone - '1-4' for Chinese four tones, and '5' for neutral tone
@@ -63,100 +65,100 @@ def split_pinyin(pinyin):
     - (initial, final, retroflex, tone)
 	'''
 
-  # retrieve tone
-  input = pinyin
-  if pinyin[-1] >= '0' and pinyin[-1] <= '9':
-    tone = pinyin[-1]
-    if tone == '0':
-      tone = '5'
-    pinyin = pinyin[:-1]
-  else:
-    tone = '5'
+    # retrieve tone
+    input = pinyin
+    if pinyin[-1] >= '0' and pinyin[-1] <= '9':
+        tone = pinyin[-1]
+        if tone == '0':
+            tone = '5'
+        pinyin = pinyin[:-1]
+    else:
+        tone = '5'
 
-  # check Erhua (retroflex): Pinyin is not "er" and ending with "r"
-  retroflex = ''
-  if pinyin != 'er' and pinyin[-1] == 'r':
-    pinyin = pinyin[:-1]
-    retroflex = 'rr'
-
-  # get initial, final
-  initial = ''
-  if pinyin[0] == 'y':
-    # ya->ia, yan->ian, yang->iang, yao->iao, ye->ie, yo->io, yong->iong, you->iou
-    # yi->i, yin->in, ying->ing
-    # yu->v, yuan->van, yue->ve, yun->vn
-    pinyin = 'i' + pinyin[1:]
-    if pinyin[1] == 'i':
-      pinyin = pinyin[1:]
-    elif pinyin[1] in 'uv':
-      pinyin = 'v' + pinyin[2:]
-    final = pinyin
-  elif pinyin[0] == 'w':
-    # wa->ua, wo->uo, wai->uai, wei->uei, wan->uan, wen->uen, wang->uang, weng->ueng
-    # wu->u
-    # change 'w' to 'u', except 'wu->u'
-    pinyin = 'u' + pinyin[1:]
-    if pinyin[1] == 'u':
-      pinyin = pinyin[1:]
-    final = pinyin
-  elif pinyin in ['ng', 'm', 'n']:
-    # ng->ng, n->n, m->m
-    final = pinyin
-  else:
-    # get initial and final
-    # initial should be: b p m f d t n l g k h j q x z c s r zh ch sh
-    final = pinyin
-    if len(pinyin) > 1 and pinyin[:2] in ['ch', 'sh', 'zh']:
-      initial = pinyin[:2]
-      final = pinyin[2:]
-    elif pinyin[0] in 'bpmfdtnlgkhjqxzcsr':
-      initial = pinyin[:1]
-      final = pinyin[1:]
-
-    # the final of "zi, ci, si" should be "ix"
-    if initial in ['c', 's', 'z'] and final == 'i':
-      final = 'ix'
-    # the final of "zhi, chi, shi, ri" should be "iy"
-    elif initial in ['ch', 'r', 'sh', 'zh'] and final == 'i':
-      final = 'iy'
-    # ju->jv, jue->jve, juan->jvan, jun->jvn,
-    # qu->qv, que->qve, quan->qvan, qun->qvn,
-    # xu->xv, xue->xve, xuan->xvan, xun->xvn
-    # change all leading 'u' to 'v'
-    elif initial in ['j', 'q', 'x'] and final[0] == 'u':
-      final = 'v' + final[1:]
-    # lue->lve, nue->nve
-    if final == 'ue':
-      final = 've'
-    # ui->uei
-    # iu->iou
-    # un->uen
-    if final == 'ui':
-      final = 'uei'
-    elif final == 'iu':
-      final = 'iou'
-    elif final == 'un':
-      final = 'uen'
-  # special process for final "ng, m, n, ev"
-  # full pinyin might be "hng", "hm", "ng", "m", "n"
-  # as there are to few samples, treat final "m, n" as initial, and "ng" as "n", and "ev" as "ei"
-  if final == 'ng':
-    final = 'n'
-  if final == 'ev':
-    final = 'ei'
-
-  # keep the original input, if it is not Pinyin
-  if (len(initial) and initial not in symbols) or (len(final) and final not in symbols):
-    final = input
-    initial = ''
+    # check Erhua (retroflex): Pinyin is not "er" and ending with "r"
     retroflex = ''
-    tone = ''
+    if pinyin != 'er' and pinyin[-1] == 'r':
+        pinyin = pinyin[:-1]
+        retroflex = 'rr'
 
-  return (initial, final, retroflex, tone)
+    # get initial, final
+    initial = ''
+    if pinyin[0] == 'y':
+        # ya->ia, yan->ian, yang->iang, yao->iao, ye->ie, yo->io, yong->iong, you->iou
+        # yi->i, yin->in, ying->ing
+        # yu->v, yuan->van, yue->ve, yun->vn
+        pinyin = 'i' + pinyin[1:]
+        if pinyin[1] == 'i':
+            pinyin = pinyin[1:]
+        elif pinyin[1] in 'uv':
+            pinyin = 'v' + pinyin[2:]
+        final = pinyin
+    elif pinyin[0] == 'w':
+        # wa->ua, wo->uo, wai->uai, wei->uei, wan->uan, wen->uen, wang->uang, weng->ueng
+        # wu->u
+        # change 'w' to 'u', except 'wu->u'
+        pinyin = 'u' + pinyin[1:]
+        if pinyin[1] == 'u':
+            pinyin = pinyin[1:]
+        final = pinyin
+    elif pinyin in ['ng', 'm', 'n']:
+        # ng->ng, n->n, m->m
+        final = pinyin
+    else:
+        # get initial and final
+        # initial should be: b p m f d t n l g k h j q x z c s r zh ch sh
+        final = pinyin
+        if len(pinyin) > 1 and pinyin[:2] in ['ch', 'sh', 'zh']:
+            initial = pinyin[:2]
+            final = pinyin[2:]
+        elif pinyin[0] in 'bpmfdtnlgkhjqxzcsr':
+            initial = pinyin[:1]
+            final = pinyin[1:]
+
+        # the final of "zi, ci, si" should be "ix"
+        if initial in ['c', 's', 'z'] and final == 'i':
+            final = 'ix'
+        # the final of "zhi, chi, shi, ri" should be "iy"
+        elif initial in ['ch', 'r', 'sh', 'zh'] and final == 'i':
+            final = 'iy'
+        # ju->jv, jue->jve, juan->jvan, jun->jvn,
+        # qu->qv, que->qve, quan->qvan, qun->qvn,
+        # xu->xv, xue->xve, xuan->xvan, xun->xvn
+        # change all leading 'u' to 'v'
+        elif initial in ['j', 'q', 'x'] and final[0] == 'u':
+            final = 'v' + final[1:]
+        # lue->lve, nue->nve
+        if final == 'ue':
+            final = 've'
+        # ui->uei
+        # iu->iou
+        # un->uen
+        if final == 'ui':
+            final = 'uei'
+        elif final == 'iu':
+            final = 'iou'
+        elif final == 'un':
+            final = 'uen'
+    # special process for final "ng, m, n, ev"
+    # full pinyin might be "hng", "hm", "ng", "m", "n"
+    # as there are to few samples, treat final "m, n" as initial, and "ng" as "n", and "ev" as "ei"
+    if final == 'ng':
+        final = 'n'
+    if final == 'ev':
+        final = 'ei'
+
+    # keep the original input, if it is not Pinyin
+    if (len(initial) and initial not in symbols) or (len(final) and final not in symbols):
+        final = input
+        initial = ''
+        retroflex = ''
+        tone = ''
+
+    return (initial, final, retroflex, tone)
 
 
 def pinyin_to_symbols(text):
-  '''
+    '''
   Convert Pinyin string to symbols.
 
   The input Pinyin string can contain optional prosodic structure labeling tags.
@@ -172,34 +174,34 @@ def pinyin_to_symbols(text):
     - List of symbols
   '''
 
-  # ensure space between valid symbols
-  text = text.replace(' ', ' | ')
-  text = text.replace('/', ' / ')
-  text = text.replace(',', ' , ')
-  text = text.replace('.', ' . ')
-  text = text.replace('?', ' ? ')
-  text = text.replace('!', ' ! ')
-  text = text.replace('-', ' ')
+    # ensure space between valid symbols
+    text = text.replace(' ', ' | ')
+    text = text.replace('/', ' / ')
+    text = text.replace(',', ' , ')
+    text = text.replace('.', ' . ')
+    text = text.replace('?', ' ? ')
+    text = text.replace('!', ' ! ')
+    text = text.replace('-', ' ')
 
-  # split into tokens
-  tokens = text.strip().split()
+    # split into tokens
+    tokens = text.strip().split()
 
-  # convert to symbols
-  symbols = []
-  for token in tokens:
-    if token == '|':
-      symbols.append(' ')
-    elif token in ['/', ',', '.', '?', '!']:
-      symbols.append(token)
-    else:
-      (initial, final, retroflex, tone) = split_pinyin(token)
-      if len(initial)>0:   symbols.append(initial)
-      if len(final)>0:     symbols.append(final)
-      if len(retroflex)>0: symbols.append(retroflex)
-      if len(tone)>0:      symbols.append(tone)
-  
-  return symbols
+    # convert to symbols
+    symbols = []
+    for token in tokens:
+        if token == '|':
+            symbols.append(' ')
+        elif token in ['/', ',', '.', '?', '!']:
+            symbols.append(token)
+        else:
+            (initial, final, retroflex, tone) = split_pinyin(token)
+            if len(initial) > 0:   symbols.append(initial)
+            if len(final) > 0:     symbols.append(final)
+            if len(retroflex) > 0: symbols.append(retroflex)
+            if len(tone) > 0:      symbols.append(tone)
+
+    return symbols
 
 
 # valid symbols for Chinese pinyin
-symbols = _initials + _finals + _retroflex + _tones + _prosodic_struct
+symbols = [_pad, _eos] + _initials + _finals + _retroflex + _tones + _prosodic_struct
