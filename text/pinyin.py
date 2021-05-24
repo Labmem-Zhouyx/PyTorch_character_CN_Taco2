@@ -17,7 +17,7 @@ Supports the following Pinyin-with-label string (Pinyin with prosodic structure 
   Author: johnson.tsing@gmail.com
 '''
 
-__pad = '_'
+_pad = '_'
 _eos = '~'
 
 # Mandarin initials (普通话声母列表)

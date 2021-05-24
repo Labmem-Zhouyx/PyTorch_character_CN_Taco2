@@ -288,8 +288,11 @@ class Tacotron2(nn.Module):
         return mel_outputs, mel_post, stop_tokens, alignments
 
     def inference(self, inputs):
-        # Only text inputs
+        # Only text inputs 
+        device = next(self.parameters()).device
+        inputs = inputs.to(device).long()
         inputs = inputs, None, None
+        
         return self.forward(inputs)
 
 
