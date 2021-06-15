@@ -30,7 +30,7 @@ class hparams:
         num_symbols = len(symbols)
         text_embedding_dim = 512
         stop_threshold = 0.5
-        n_frames_per_step = 1
+        n_frames_per_step = 3
         max_decoder_steps = 1000
 
         # Encoder parameters
